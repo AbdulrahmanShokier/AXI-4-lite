@@ -15,12 +15,18 @@ module axi4_lite_read
     output reg [data_width - 1 : 0] read_data,
     output reg                      read_data_valid,
     output reg                      read_data_resp,
-    input                           read_data_ready
+    input                           read_data_ready,
+
+    // Memory-read interface (drives an external/shared memory array)
+    output [add_width - 1 : 0]      mem_rd_addr,
+    input  [data_width - 1 : 0]     mem_rd_data
 );
 
-reg [data_width - 1 : 0] memory [add_num - 1 : 0] ;
-
 reg [add_width  - 1 : 0] read_add_reg;
+
+// Address presented to the shared memory: the latched address of the
+// transfer currently being serviced.
+assign mem_rd_addr = read_add_reg;
 
 
 parameter [1:0]
@@ -95,7 +101,7 @@ always @(posedge clk) begin
         read_data_state: begin
             read_add_ready  <= 0;                           // not ready for new address to extract data off
 
-            read_data       <= memory[read_add_reg];
+            read_data       <= mem_rd_data;
             read_data_valid <= 1;                          // data is extracted succesfully out of memory
             read_data_resp  <= 1;                          // response to the current data exctracted of memory
 

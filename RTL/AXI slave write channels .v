@@ -18,10 +18,13 @@ module axi4_lite_write
 
     output reg                      write_resp,
     output reg                      write_resp_valid,
-    input                           write_resp_ready
-);
+    input                           write_resp_ready,
 
-reg [data_width - 1 : 0] memory [add_num - 1 : 0] ;
+    // Memory-write interface (drives an external/shared memory array)
+    output reg                      mem_wr_en,
+    output reg [add_width - 1 : 0]  mem_wr_addr,
+    output reg [data_width - 1 : 0] mem_wr_data
+);
 
 reg [add_width  - 1 : 0] write_add_reg;
 
@@ -92,6 +95,10 @@ always @(posedge clk) begin
 
         write_add_reg     <= {add_width{1'b0}}  ; 
         write_data_reg    <= {data_width{1'b0}} ;
+
+        mem_wr_en         <= 1'b0;
+        mem_wr_addr       <= {add_width{1'b0}};
+        mem_wr_data       <= {data_width{1'b0}};
     end
     
     else begin
@@ -101,6 +108,7 @@ always @(posedge clk) begin
         idle: begin
         write_resp_valid  <= 0;
         write_resp        <= 0;
+        mem_wr_en         <= 1'b0;   // default: no memory write in idle
 
             if (write_add_valid && write_add_ready) begin
                 write_add_reg     <= write_add;
@@ -115,9 +123,13 @@ always @(posedge clk) begin
         end 
 
         write_data_state: begin
-            
+
+            mem_wr_en <= 1'b0;   // default: pulse for exactly one cycle below
+
             if (add_received_flag) begin
-                memory[write_add_reg] <= write_data_reg;
+                mem_wr_en   <= 1'b1;
+                mem_wr_addr <= write_add_reg;
+                mem_wr_data <= write_data_reg;
 
                 write_resp            <= 1;
                 write_resp_valid      <= 1;
@@ -139,6 +151,7 @@ always @(posedge clk) begin
         add_received_flag <= 0;
 
         write_resp_valid  <= 0;
+        mem_wr_en         <= 1'b0;
 
         end
             

@@ -1,6 +1,6 @@
 `timescale 1ns/1ps
 
-module tb_axi4_lite;
+module tb_axi4_read_lite;
 
     parameter DATA_WIDTH = 32;
     parameter ADD_WIDTH  = 4;
